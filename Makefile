@@ -53,6 +53,10 @@ jscompile: src
 jsmin: jscompile
 	@build/js_minimize.sh
 
+.PHONY: wasm
+wasm:
+	@build/wasm_build.sh
+
 .PHONY: jsgz
 jsgz: jsmin
 	@build/js_archive.sh
@@ -158,6 +162,9 @@ cpp: cppcompile
 
 .PHONY: js
 js: jsmin
+
+.PHONY: buildwasm
+buildwasm: wasm
 
 .PHONY: configurecpp
 configurecpp: cppconfigure
