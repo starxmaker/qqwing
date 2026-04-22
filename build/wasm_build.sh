@@ -49,6 +49,23 @@ resolve_emcc() {
 	exit 1
 }
 
+resolve_tsc_path() {
+	local tsc_version
+	local tsc_major
+
+	if command -v tsc >/dev/null 2>&1; then
+		tsc_version="$(tsc --version 2>/dev/null | sed -n 's/^Version //p')"
+		tsc_major="${tsc_version%%.*}"
+		if [ -n "$tsc_major" ] && [ "$tsc_major" -lt 6 ]; then
+			printf '%s\n' "$PATH"
+			return 0
+		fi
+	fi
+
+	require_cmd npm
+	npm exec --yes --package typescript@5.6.3 -- node -p 'process.env.PATH'
+}
+
 generate_config() {
 	cat > "$BUILD_DIR/config.h" <<EOF
 #define HAVE_GETTIMEOFDAY 1
@@ -90,8 +107,10 @@ require_cmd awk
 require_cmd grep
 require_cmd mktemp
 require_cmd node
+require_cmd sed
 
 EMCC="$(resolve_emcc)"
+TSC_PATH="$(resolve_tsc_path)"
 
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
@@ -104,18 +123,20 @@ generate_config
 patch_main
 
 echo "Compiling to WASM with: $EMCC"
-"$EMCC" "$BUILD_DIR/main.cpp" "$BUILD_DIR/qqwing.cpp" \
+PATH="$TSC_PATH" "$EMCC" "$BUILD_DIR/main.cpp" "$BUILD_DIR/qqwing.cpp" \
 	-I"$BUILD_DIR" \
 	-o "$BUILD_DIR/main.js" \
 	-sMODULARIZE \
 	-sEXPORT_NAME=QQWingWasm \
 	-sEXPORTED_RUNTIME_METHODS=ccall,callMain \
 	-sINVOKE_RUN=0 \
-	-sENVIRONMENT=web,node
+	-sENVIRONMENT=web,node \
+	--emit-tsd "$BUILD_DIR/main.d.ts"
 
 mkdir -p "$TARGET_DIR"
 cp "$BUILD_DIR/main.js" "$TARGET_DIR/main.js"
 cp "$BUILD_DIR/main.wasm" "$TARGET_DIR/main.wasm"
+cp "$BUILD_DIR/main.d.ts" "$TARGET_DIR/main.d.ts"
 
 rm -rf "$BUILD_DIR"
 
