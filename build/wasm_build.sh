@@ -108,9 +108,10 @@ echo "Compiling to WASM with: $EMCC"
 	-I"$BUILD_DIR" \
 	-o "$BUILD_DIR/main.js" \
 	-sMODULARIZE \
+	-sEXPORT_NAME=QQWingWasm \
 	-sEXPORTED_RUNTIME_METHODS=ccall,callMain \
 	-sINVOKE_RUN=0 \
-	-sENVIRONMENT=node
+	-sENVIRONMENT=web,node
 
 mkdir -p "$TARGET_DIR"
 cp "$BUILD_DIR/main.js" "$TARGET_DIR/main.js"
