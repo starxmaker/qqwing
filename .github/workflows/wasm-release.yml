@@ -1,0 +1,61 @@
+name: Build And Release Wasm
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    container:
+      image: emscripten/emsdk:4.0.7
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install zip
+        run: |
+          apt-get update
+          apt-get install -y zip
+
+      - name: Build wasm artifacts
+        run: make wasm
+
+      - name: Package wasm zip
+        id: package
+        run: |
+          version="$(sed -n 's/^AC_INIT(qqwing, *\([^,]*\),.*/\1/p' build/configure.ac)"
+          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
+            archive_name="qqwing-wasm-${GITHUB_REF_NAME}.zip"
+          else
+            archive_name="qqwing-wasm-${version}.zip"
+          fi
+          rm -f "$archive_name"
+          (
+            cd target
+            zip -r "../$archive_name" wasm
+          )
+          echo "archive_name=$archive_name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload wasm artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.archive_name }}
+          path: ${{ steps.package.outputs.archive_name }}
+
+      - name: Publish release asset
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.package.outputs.archive_name }}
+          generate_release_notes: true

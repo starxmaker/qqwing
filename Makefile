@@ -55,7 +55,7 @@ jsmin: jscompile
 
 .PHONY: wasm
 wasm:
-	@build/wasm_build.sh
+	@bash build/wasm_build.sh
 
 .PHONY: jsgz
 jsgz: jsmin
