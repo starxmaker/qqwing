@@ -91,11 +91,6 @@ require_cmd grep
 require_cmd mktemp
 require_cmd node
 
-if [ ! -d "$EMSDK_DIR" ]; then
-	echo "Error: EMSDK_DIR does not exist: $EMSDK_DIR" >&2
-	exit 1
-fi
-
 EMCC="$(resolve_emcc)"
 
 rm -rf "$BUILD_DIR"
