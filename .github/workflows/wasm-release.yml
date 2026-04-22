@@ -33,27 +33,23 @@ jobs:
       - name: Build wasm artifacts
         run: make wasm
 
-      - name: Package wasm zip
+      - name: Upload wasm artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qqwing-wasm
+          path: target/wasm
+
+      - name: Package release zip
         id: package
+        if: github.ref_type == 'tag'
         run: |
-          version="$(sed -n 's/^AC_INIT(qqwing, *\([^,]*\),.*/\1/p' build/configure.ac)"
-          if [[ "${GITHUB_REF_TYPE:-}" == "tag" ]]; then
-            archive_name="qqwing-wasm-${GITHUB_REF_NAME}.zip"
-          else
-            archive_name="qqwing-wasm-${version}.zip"
-          fi
+          archive_name="qqwing-wasm-${GITHUB_REF_NAME}.zip"
           rm -f "$archive_name"
           (
             cd target
             zip -r "../$archive_name" wasm
           )
           echo "archive_name=$archive_name" >> "$GITHUB_OUTPUT"
-
-      - name: Upload wasm artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.package.outputs.archive_name }}
-          path: ${{ steps.package.outputs.archive_name }}
 
       - name: Publish release asset
         if: github.ref_type == 'tag'
