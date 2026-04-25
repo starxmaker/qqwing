@@ -1,3 +1,7 @@
 target
 ~*
 *~
+
+npm/qqwing-wasm/main.d.ts
+npm/qqwing-wasm/main.wasm
+npm/qqwing-wasm/main.js
